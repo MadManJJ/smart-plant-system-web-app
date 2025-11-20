@@ -1,9 +1,7 @@
-// src/firebase.ts
-import { initializeApp } from "firebase/app";
-import { getDatabase } from "firebase/database";
-import { getAuth } from "firebase/auth";
+import { initializeApp, type FirebaseApp } from "firebase/app";
+import { getDatabase, type Database } from "firebase/database";
+import { getAuth, type Auth } from "firebase/auth";
 
-// Define the config type for TypeScript safety
 const firebaseConfig = {
   apiKey: import.meta.env.VITE_API_KEY,
   authDomain: import.meta.env.VITE_AUTH_DOMAIN,
@@ -14,9 +12,24 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_APP_ID,
 };
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+// --- ERROR CHECKING ---
+if (!firebaseConfig.apiKey || !firebaseConfig.databaseURL) {
+  console.error("🚨 FIREBASE CONFIG ERROR: Missing API Key or Database URL.");
+}
 
-// Export the Realtime Database instance
-export const db = getDatabase(app);
-export const auth = getAuth(app);
+// Define variables with their Types
+let app: FirebaseApp;
+let db: Database;
+let auth: Auth;
+
+try {
+  app = initializeApp(firebaseConfig);
+  db = getDatabase(app);
+  auth = getAuth(app);
+  console.log("✅ Firebase initialized successfully");
+} catch (error) {
+  console.error("🔥 CRITICAL FIREBASE ERROR:", error);
+  throw new Error("Firebase failed to initialize.");
+}
+
+export { db, auth };
