@@ -83,10 +83,13 @@ const PlantDashboard = () => {
           color: "#2d3436",
           marginBottom: "40px",
           letterSpacing: "-0.03em",
-          textAlign: "center",
+          textAlign: "left",
+          maxWidth: "1200px",
+          width: "100%",
+          margin: "0 auto 40px auto",
         }}
       >
-        Smart Plant Monitor
+        Smart <span style={{ color: "#10B981" }}>Plant</span> Monitor
       </h1>
 
       <div
