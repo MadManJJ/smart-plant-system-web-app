@@ -1,10 +1,22 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
+/* 1. Reset default browser styles so there are no white borders */
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  box-sizing: border-box;
 }
 
+/* 2. Fix the Root Container (This was your main problem) */
+#root {
+  max-width: 100%;    /* changed from 1280px to 100% */
+  width: 100%;        /* ensure it takes full width */
+  margin: 0;          /* changed from '0 auto' */
+  padding: 0;         /* changed from '2rem' */
+  text-align: left;   /* reset text alignment */
+}
+
+/* Optional: Keep these if you still use them, otherwise delete */
 .logo {
   height: 6em;
   padding: 1.5em;
@@ -19,24 +31,12 @@
 }
 
 @keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }
 
 @media (prefers-reduced-motion: no-preference) {
   a:nth-of-type(2) .logo {
     animation: logo-spin infinite 20s linear;
   }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
 }

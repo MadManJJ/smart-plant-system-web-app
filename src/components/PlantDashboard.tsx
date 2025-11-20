@@ -2,6 +2,9 @@ import { useEffect, useState } from "react";
 import { db, auth } from "../firebase";
 import { signInAnonymously } from "firebase/auth";
 import { ref, onValue, query, limitToLast } from "firebase/database";
+import { WeatherCard } from "./WeatherCard";
+import { CameraCard } from "./CameraCard";
+import { LoadingScreen } from "./LoadingScreen";
 
 // 1. Define the shape of your data (Must match ESP32 struct)
 interface SensorData {
@@ -57,75 +60,58 @@ const PlantDashboard = () => {
     };
   }, []);
 
-  if (loading) return <h2>Loading Sensor Data...</h2>;
+  if (loading) return <LoadingScreen />;
   if (!data) return <h2>No Data Found</h2>;
 
   return (
-    <div style={{ padding: "20px", fontFamily: "sans-serif" }}>
-      <h1>🌿 Smart Plant Monitor</h1>
-      <p>Last Updated: {new Date(data.timestamp).toLocaleString()}</p>
+    <div
+      style={{
+        height: "100vh",
+        backgroundColor: "#f8f9fa",
+        padding: "40px 20px",
+        fontFamily: "'Inter', system-ui, -apple-system, sans-serif",
+        display: "flex",
+        flexDirection: "column",
+        boxSizing: "border-box",
+        overflow: "hidden",
+      }}
+    >
+      <h1
+        style={{
+          fontSize: "2rem",
+          fontWeight: "700",
+          color: "#2d3436",
+          marginBottom: "40px",
+          letterSpacing: "-0.03em",
+          textAlign: "center",
+        }}
+      >
+        Smart Plant Monitor
+      </h1>
 
       <div
         style={{
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-          gap: "20px",
+          display: "flex",
+          flexWrap: "wrap",
+          gap: "24px",
+          maxWidth: "1200px",
+          margin: "0 auto",
+          alignItems: "stretch",
+          flex: 1,
+          width: "100%",
         }}
       >
-        {/* Temperature Card */}
-        <Card title="Temperature" value={`${data.temp.toFixed(1)} °C`} />
-
-        {/* Humidity Card */}
-        <Card title="Humidity" value={`${data.humidity.toFixed(1)} %`} />
-
-        {/* Soil Card */}
-        <Card title="Soil Moisture" value={data.soil_moisture.toString()} />
-
-        {/* Light Card */}
-        <Card title="Light Level" value={data.light_level.toString()} />
-
-        {/* Status Cards */}
-        <Card
-          title="Rain Status"
-          value={data.rain_detected ? "RAINING 🌧️" : "Dry ☀️"}
-          color={data.rain_detected ? "red" : "green"}
-        />
-
-        <Card
-          title="Motion"
-          value={data.motion_detected ? "Detected 🏃" : "None"}
-        />
+        <div style={{ flex: "6 1 0", minWidth: "300px" }}>
+          <WeatherCard data={data} />
+        </div>
+        <div style={{ flex: "4 1 0", minWidth: "250px" }}>
+          <CameraCard />
+        </div>
       </div>
     </div>
   );
 };
 
-// Simple Helper Component for UI Cards
-const Card = ({
-  title,
-  value,
-  color = "#333",
-}: {
-  title: string;
-  value: string;
-  color?: string;
-}) => (
-  <div
-    style={{
-      border: "1px solid #ddd",
-      borderRadius: "10px",
-      padding: "20px",
-      boxShadow: "0 4px 6px rgba(0,0,0,0.1)",
-      backgroundColor: "white",
-    }}
-  >
-    <h3 style={{ margin: "0 0 10px 0", color: "#666", fontSize: "14px" }}>
-      {title}
-    </h3>
-    <div style={{ fontSize: "24px", fontWeight: "bold", color: color }}>
-      {value}
-    </div>
-  </div>
-);
+
 
 export default PlantDashboard;
