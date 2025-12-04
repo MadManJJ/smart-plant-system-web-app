@@ -13,7 +13,7 @@ const ai = new GoogleGenAI({
   apiKey: import.meta.env.VITE_GEMINI_API_KEY 
 });
 
-const FIVE_MINUTES_MS =  30 * 1000;
+const FIVE_MINUTES_MS =  15 * 1000;
 const IMG_URL = "/camera-api/jpg"
 
 // 1. Define the shape of your data (Must match ESP32 struct)
@@ -42,8 +42,7 @@ const getRawModelText = (response: any): string | null => {
 const PlantDashboard = () => {
   const [data, setData] = useState<SensorData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
-  const [gettingImg, setGettingImg] = useState<boolean>(false);
-  const [doneRunning, setDoneRunning] = useState<boolean>(true);
+  const [isVideoActive, setIsVideoActive] = useState<boolean>(true);
 
   useEffect(() => {
     let unsubscribe: () => void; // Define variable to hold the cleanup function
@@ -84,101 +83,94 @@ const PlantDashboard = () => {
   }, []);
 
   const checkPlantStatus = async () => {
-    if (!doneRunning) return;
-    setDoneRunning(false);
-    setGettingImg(true);
-    console.log("Checking plant status...");
+    if (!isVideoActive) return;
+    setIsVideoActive(false);
+
     try {
       if (!data) {
         console.log("No sensor data available for analysis.");
-        setGettingImg(false);
-        setDoneRunning(true);
         return;
       }
-      console.log("Preparing image part...");
       
       // Get image part from ESP32 camera stream via Vite proxy
+      console.log("Preparing image part...");
       const imagePart = await urlToGenerativePart(IMG_URL);
       console.log("Image part prepared.");
 
-      // const promptParts = [
-      //   imagePart, // Your image data
+      const promptParts = [
+        imagePart,
         
-      //   `Analyze the plant in the image and the provided data to determine if the plant needs water. 
-      //   The entire response MUST be a JSON object that adheres strictly to the provided responseSchema. DO NOT include any introductory or explanatory text outside of the JSON block.
+        `Analyze the plant in the image and the provided data to determine if the plant needs water. 
+        The entire response MUST be a JSON object that adheres strictly to the provided responseSchema. DO NOT include any introductory or explanatory text outside of the JSON block.
 
-      //   **Sensor Data:**
-      //   - Soil Moisture Reading: ${data.soil_moisture}%
-      //   - Ambient Temperature: ${data.temp}°C
-      //   - Humidity: ${data.humidity}%
-      //   - Light Level: ${data.light_level} Lux
+        **Sensor Data:**
+        - Soil Moisture Reading: ${data.soil_moisture}%
+        - Ambient Temperature: ${data.temp}°C
+        - Humidity: ${data.humidity}%
+        - Light Level: ${data.light_level} Lux
 
-      //   Based on the image and data, what is the 'water_decision' and output it in the JSON object.?`
-      // ];     
+        Based on the image and data, what is the 'water_decision' and output it in the JSON object.?`
+      ];     
       
-      // console.log("Preparing config...");
-      // const config = {
-      //   temperature: 0.1,
-      //   responseMimeType: "application/json",
-      //   responseSchema: {
-      //     type: Type.OBJECT,
-      //     properties: {
-      //       water_decision: { 
-      //         type: Type.STRING, 
-      //         enum: ["Yes", "No"] 
-      //       }
-      //     }
-      //   }
-      // };  
+      console.log("Preparing config...");
+      const config = {
+        temperature: 0.1,
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            water_decision: { 
+              type: Type.STRING, 
+              enum: ["Yes", "No"] 
+            }
+          }
+        }
+      };  
       
-      // console.log("Sending request to AI model...");
-      // const response: any = await ai.models.generateContent({
-      //     model: 'gemini-2.5-flash',
-      //     contents: promptParts,
-      //     config: config
-      // });     
+      console.log("Sending request to AI model...");
+      const response: any = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: promptParts,
+          config: config
+      });     
 
-      // const rawText = getRawModelText(response);
+      const rawText = getRawModelText(response);
 
-      // if (!rawText) {
-      //     console.log("No raw text output found in model response.", response);
-      //     // If no text, execution stops, finally block resets state.
-      //     return;
-      // }
+      if (!rawText) {
+        throw new Error("Failed to extract raw text from model response.");
+      }
 
-      // // 2. Use a regex to locate and extract the valid JSON block {}
-      // const jsonMatch = rawText.match(/\{[\s\S]*\}/); 
-      // if (!jsonMatch) {
-      //     console.log("Could not find a valid JSON block in the model's text output:", rawText);
-      //     return;
-      // }
+      // Use a regex to locate and extract the valid JSON block {}
+      const jsonMatch = rawText.match(/\{[\s\S]*\}/); 
+      if (!jsonMatch) {
+          throw new Error("No valid JSON block found in model response.");
+      }
 
-      // const jsonString = jsonMatch[0];      
+      const jsonString = jsonMatch[0];      
 
-      // // 3. Parse the clean JSON string
-      // const jsonResponse: { water_decision: "Yes" | "No" } = JSON.parse(jsonString);
+      // Parse the clean JSON string
+      const jsonResponse: { water_decision: "Yes" | "No" } = JSON.parse(jsonString);
 
-      // // 4. Now, safely access the decision
-      // const decision = jsonResponse.water_decision;   
+      // Now, safely access the decision
+      const decision = jsonResponse.water_decision;   
 
-      // if (decision !== "Yes" && decision !== "No") {
-      //     console.log("Unexpected decision value:", decision);
-      //     return;
-      // }
+      if (decision !== "Yes" && decision !== "No") {
+          throw new Error(`Invalid water_decision value: ${decision}`);
+      }
 
-      // if (decision === "Yes") {
-      //     console.log("The plant needs watering.");
-      // } else {
-      //     console.log("The plant does not need watering.");
-      // }
+      if (decision === "Yes") {
+          console.log("The plant needs watering.");
+      } else {
+          console.log("The plant does not need watering.");
+      }
     } catch (error) {
       console.error("Error checking plant status:", error);
     }
     finally {
-      setGettingImg(false);
-      setDoneRunning(true);
+      setIsVideoActive(true);      
     }
   }
+
   // Check plant status every 5 minutes
   useInterval(checkPlantStatus, FIVE_MINUTES_MS);
 
@@ -230,9 +222,13 @@ const PlantDashboard = () => {
           <WeatherCard data={data} />
         </div>
         <div style={{ flex: "4 1 0", minWidth: "250px" }}>
-          {/* {
-            gettingImg ? <LoadingScreen /> : <CameraCard/>
-          } */}
+        {isVideoActive ? (
+              // 🟢 Renders the live stream when active
+              <CameraCard isVideoActive={true} />
+          ) : (
+              // Renders the loading screen while stream is down and image/AI is processing
+              <CameraCard isVideoActive={false} />
+          )}
         </div>
       </div>
     </div>
