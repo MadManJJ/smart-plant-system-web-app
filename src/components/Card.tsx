@@ -42,6 +42,19 @@ export const Card = ({
         }}>
             {title}
         </h3>
+        {/* ESP32 Image Stream */}
+        <img 
+            src="http://172.20.10.2/stream" 
+            alt="ESP32 Stream"
+            style={{ 
+                width: "100%",        // Forces it to fit the card width
+                height: "auto",       // Maintains aspect ratio
+                borderRadius: "8px",  // Matches your card aesthetic
+                minHeight: "150px",   // Keeps the card open even if image fails
+                backgroundColor: "#f3f4f6", // Grey background to see if it's loading
+                objectFit: "cover"
+            }} 
+        />
         <div style={{
             fontSize: "32px",
             fontWeight: "700",
