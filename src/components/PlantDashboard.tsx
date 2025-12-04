@@ -5,6 +5,16 @@ import { ref, onValue, query, limitToLast } from "firebase/database";
 import { WeatherCard } from "./WeatherCard";
 import { CameraCard } from "./CameraCard";
 import { LoadingScreen } from "./LoadingScreen";
+import { GoogleGenAI, Type } from "@google/genai";
+import { urlToGenerativePart } from "../helpers/urlToGenerativePart";
+import { useInterval } from '../hooks/useInterval';
+
+const ai = new GoogleGenAI({ 
+  apiKey: import.meta.env.VITE_GEMINI_API_KEY 
+});
+
+const FIVE_MINUTES_MS =  30 * 1000;
+const IMG_URL = "/camera-api/jpg"
 
 // 1. Define the shape of your data (Must match ESP32 struct)
 interface SensorData {
@@ -18,9 +28,22 @@ interface SensorData {
   timestamp: number; // The server timestamp
 }
 
+const getRawModelText = (response: any): string | null => {
+    if (response && response.candidates && response.candidates.length > 0) {
+        const candidate = response.candidates[0];
+        if (candidate.content && candidate.content.parts && candidate.content.parts.length > 0) {
+            // The raw response text is in the first part of the candidate content
+            return candidate.content.parts[0].text;
+        }
+    }
+    return null;
+} 
+
 const PlantDashboard = () => {
   const [data, setData] = useState<SensorData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [gettingImg, setGettingImg] = useState<boolean>(false);
+  const [doneRunning, setDoneRunning] = useState<boolean>(true);
 
   useEffect(() => {
     let unsubscribe: () => void; // Define variable to hold the cleanup function
@@ -59,6 +82,105 @@ const PlantDashboard = () => {
       if (unsubscribe) unsubscribe();
     };
   }, []);
+
+  const checkPlantStatus = async () => {
+    if (!doneRunning) return;
+    setDoneRunning(false);
+    setGettingImg(true);
+    console.log("Checking plant status...");
+    try {
+      if (!data) {
+        console.log("No sensor data available for analysis.");
+        setGettingImg(false);
+        setDoneRunning(true);
+        return;
+      }
+      console.log("Preparing image part...");
+      
+      // Get image part from ESP32 camera stream via Vite proxy
+      const imagePart = await urlToGenerativePart(IMG_URL);
+      console.log("Image part prepared.");
+
+      // const promptParts = [
+      //   imagePart, // Your image data
+        
+      //   `Analyze the plant in the image and the provided data to determine if the plant needs water. 
+      //   The entire response MUST be a JSON object that adheres strictly to the provided responseSchema. DO NOT include any introductory or explanatory text outside of the JSON block.
+
+      //   **Sensor Data:**
+      //   - Soil Moisture Reading: ${data.soil_moisture}%
+      //   - Ambient Temperature: ${data.temp}°C
+      //   - Humidity: ${data.humidity}%
+      //   - Light Level: ${data.light_level} Lux
+
+      //   Based on the image and data, what is the 'water_decision' and output it in the JSON object.?`
+      // ];     
+      
+      // console.log("Preparing config...");
+      // const config = {
+      //   temperature: 0.1,
+      //   responseMimeType: "application/json",
+      //   responseSchema: {
+      //     type: Type.OBJECT,
+      //     properties: {
+      //       water_decision: { 
+      //         type: Type.STRING, 
+      //         enum: ["Yes", "No"] 
+      //       }
+      //     }
+      //   }
+      // };  
+      
+      // console.log("Sending request to AI model...");
+      // const response: any = await ai.models.generateContent({
+      //     model: 'gemini-2.5-flash',
+      //     contents: promptParts,
+      //     config: config
+      // });     
+
+      // const rawText = getRawModelText(response);
+
+      // if (!rawText) {
+      //     console.log("No raw text output found in model response.", response);
+      //     // If no text, execution stops, finally block resets state.
+      //     return;
+      // }
+
+      // // 2. Use a regex to locate and extract the valid JSON block {}
+      // const jsonMatch = rawText.match(/\{[\s\S]*\}/); 
+      // if (!jsonMatch) {
+      //     console.log("Could not find a valid JSON block in the model's text output:", rawText);
+      //     return;
+      // }
+
+      // const jsonString = jsonMatch[0];      
+
+      // // 3. Parse the clean JSON string
+      // const jsonResponse: { water_decision: "Yes" | "No" } = JSON.parse(jsonString);
+
+      // // 4. Now, safely access the decision
+      // const decision = jsonResponse.water_decision;   
+
+      // if (decision !== "Yes" && decision !== "No") {
+      //     console.log("Unexpected decision value:", decision);
+      //     return;
+      // }
+
+      // if (decision === "Yes") {
+      //     console.log("The plant needs watering.");
+      // } else {
+      //     console.log("The plant does not need watering.");
+      // }
+    } catch (error) {
+      console.error("Error checking plant status:", error);
+    }
+    finally {
+      setGettingImg(false);
+      setDoneRunning(true);
+    }
+  }
+  // Check plant status every 5 minutes
+  useInterval(checkPlantStatus, FIVE_MINUTES_MS);
 
   if (loading) return <LoadingScreen />;
   if (!data) return <h2>No Data Found</h2>;
@@ -108,7 +230,9 @@ const PlantDashboard = () => {
           <WeatherCard data={data} />
         </div>
         <div style={{ flex: "4 1 0", minWidth: "250px" }}>
-          <CameraCard />
+          {/* {
+            gettingImg ? <LoadingScreen /> : <CameraCard/>
+          } */}
         </div>
       </div>
     </div>

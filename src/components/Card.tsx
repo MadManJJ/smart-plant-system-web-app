@@ -3,10 +3,12 @@ export const Card = ({
     title,
     value,
     color = "#333",
+    imgURL,
 }: {
     title: string;
     value: string;
     color?: string;
+    imgURL?: string;
 }) => (
     <div
         style={{
@@ -44,7 +46,7 @@ export const Card = ({
         </h3>
         {/* ESP32 Image Stream */}
         <img 
-            src="http://172.20.10.2/stream" 
+            src={imgURL || "http://172.20.10.2/stream"} 
             alt="ESP32 Stream"
             style={{ 
                 width: "100%",        // Forces it to fit the card width

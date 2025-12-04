@@ -10,4 +10,13 @@ export default defineConfig({
       },
     }),
   ],
+  server: {
+    proxy: {
+      '/camera-api': {
+        target: 'http://172.20.10.2',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/camera-api/, ''),
+      },
+    },
+  },  
 })
