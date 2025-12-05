@@ -9,6 +9,7 @@ import { GoogleGenAI, Type } from "@google/genai";
 import { urlToGenerativePart } from "../helpers/urlToGenerativePart";
 import { useInterval } from '../hooks/useInterval';
 import { fetchWater } from "../api/plant";
+import type { SensorData } from "../types/SensorData";
 
 const ai = new GoogleGenAI({ 
   apiKey: import.meta.env.VITE_GEMINI_API_KEY 
@@ -17,17 +18,6 @@ const ai = new GoogleGenAI({
 const FIVE_MINUTES_MS = 5 * 60 * 1000;
 const IMG_URL = "/camera-api/jpg"
 
-// 1. Define the shape of your data (Must match ESP32 struct)
-interface SensorData {
-  board_id: number;
-  temp: number;
-  humidity: number; // Matches your ESP32 variable
-  soil_moisture: number;
-  light_level: number;
-  motion_detected: boolean;
-  rain_detected: boolean;
-  timestamp: number; // The server timestamp
-}
 
 const getRawModelText = (response: any): string | null => {
     if (response && response.candidates && response.candidates.length > 0) {
@@ -161,7 +151,7 @@ const PlantDashboard = () => {
 
       if (decision === "Yes") {
           console.log("The plant needs watering.");
-          await fetchWater();
+          await fetchWater(data);
       } else {
           console.log("The plant does not need watering.");
       }
@@ -226,10 +216,10 @@ const PlantDashboard = () => {
         <div style={{ flex: "4 1 0", minWidth: "250px" }}>
         {isVideoActive ? (
               // Renders the live stream when active
-              <CameraCard isVideoActive={true} />
+              <CameraCard isVideoActive={true} data={data} />
           ) : (
               // Renders the loading screen while stream is down and image/AI is processing
-              <CameraCard isVideoActive={false} />
+              <CameraCard isVideoActive={false} data={data} />
           )}
         </div>
       </div>
