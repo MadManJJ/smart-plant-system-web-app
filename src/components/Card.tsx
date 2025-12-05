@@ -1,15 +1,20 @@
+import { Button } from "./Button";
+
+const CAMERA_STREAM_URL = import.meta.env.VITE_CAMERA_STREAM_URL + "/stream";
 
 export const Card = ({
     title,
     value,
     color = "#333",
     isVideoActive,
+    buttonOnclick,
 }: {
     title: string;
     value: string;
     color?: string;
     imgURL?: string;
     isVideoActive: boolean;
+    buttonOnclick?: () => void;
 }) => (
     <div
         style={{
@@ -62,7 +67,7 @@ export const Card = ({
         {/* ESP32 Image Stream */}
           {isVideoActive ? (
               <img 
-              src={"http://172.20.10.2/stream"} 
+              src={CAMERA_STREAM_URL} 
               alt="ESP32 Stream"
               style={{ 
                   width: "100%",        // Forces it to fit the card width
@@ -79,9 +84,10 @@ export const Card = ({
               style={{ 
                   width: "100%",        // Forces it to fit the card width
                   height: "auto",       // Maintains aspect ratio
-                  borderRadius: "50px",  // Matches your card aesthetic
+                  borderRadius: "8px",  // Matches your card aesthetic
                   minHeight: "150px",   // Keeps the card open even if image fails
-                  objectFit: "cover"
+                  objectFit: "cover",
+                  display: "none",
                   }} 
               />
           )}        
@@ -89,9 +95,12 @@ export const Card = ({
             fontSize: "32px",
             fontWeight: "700",
             color: color,
-            letterSpacing: "-0.02em"
+            letterSpacing: "-0.02em",
+            display: "flex",
+            gap: "12px"
         }}>
             {value}
+            <Button onClick={buttonOnclick}>Water</Button> 
         </div>
     </div>
 );
