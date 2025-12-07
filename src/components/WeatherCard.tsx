@@ -11,13 +11,31 @@ export const WeatherCard = ({ data }: { data: SensorData }) => {
     const getConditionText = () => {
         if (data.rain_detected) return "Raining";
         if (data.soil_moisture < 20) return "Dry Soil";
+        if (data.temp > 35) return "Too Hot";
         return "Healthy";
+    };
+
+    const getConditionColor = () => {
+        if (data.rain_detected) return "#4A90E2"; // blue
+        if (data.soil_moisture < 20) return "#E67E22";
+        if (data.temp > 35) return "#E74C3C";
+        return "#27AE60";
     };
 
     const getIcon = () => {
         if (data.rain_detected) return "🌧️";
         if (data.light_level > 80) return "☀️";
         return "⛅";
+    };
+
+    const getLightText = () => {
+        if (data.light_level > 80) return "Bright Light";
+        if (data.light_level < 20) return "Low Light";
+        return "Normal Light";
+    };
+
+    const getMotionStatus = () => {
+        return data.motion_detected ? "Motion Detected" : "No Motion";
     };
 
     return (
@@ -54,7 +72,8 @@ export const WeatherCard = ({ data }: { data: SensorData }) => {
 
             {/* Main Content */}
             <div style={{ display: "flex", flexDirection: "column", gap: "40px", flex: 1 }}>
-                {/* Top Section: Big Temp & Condition */}
+                
+                {/* Top Section */}
                 <div style={{ width: "100%" }}>
                     <div style={{ display: "flex", alignItems: "center", gap: "20px" }}>
                         <span style={{ fontSize: "64px" }}>{getIcon()}</span>
@@ -70,47 +89,67 @@ export const WeatherCard = ({ data }: { data: SensorData }) => {
                                 {data.temp.toFixed(0)}°
                             </div>
                             <div style={{ color: "#888", fontSize: "16px", marginTop: "5px" }}>
+                                {getLightText()}
                             </div>
                         </div>
                     </div>
+
+                    {/* Condition */}
                     <div
                         style={{
                             fontSize: "24px",
                             fontWeight: "bold",
                             marginTop: "20px",
-                            color: "#333",
+                            color: getConditionColor(),
                         }}
                     >
                         {getConditionText()}
                     </div>
+
+                    {/* Motion */}
                     <div
                         style={{
-                            color: "#666",
-                            fontSize: "14px",
-                            marginTop: "5px",
+                            marginTop: "8px",
+                            fontSize: "15px",
+                            color: data.motion_detected ? "#E74C3C" : "#777",
                             fontWeight: "500",
-                            cursor: "pointer",
-                            display: "flex",
-                            alignItems: "center",
                         }}
                     >
+                        {data.motion_detected ? "🔴 Motion Detected" : "⚪ No Motion"}
                     </div>
                 </div>
 
-                {/* Bottom Section: Details List */}
+                {/* Details List */}
                 <div style={{ width: "100%", marginTop: "auto" }}>
                     <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
-                        <DetailRow label="Humidity" value={`${data.humidity.toFixed(1)} %`} />
-                        <div style={{ borderBottom: "1px solid #eee" }} />
-                        <DetailRow label="Soil Moisture" value={`${data.soil_moisture}`} />
-                        <div style={{ borderBottom: "1px solid #eee" }} />
-                        <DetailRow label="Light Level" value={`${data.light_level}`} />
+                        
+                        <DetailRow 
+                            label="Humidity" 
+                            value={`${data.humidity.toFixed(1)} %`} 
+                        />
+                        <Divider />
+
+                        <DetailRow
+                            label="Soil Moisture"
+                            value={`${data.soil_moisture.toFixed(0)} %`}
+                            valueColor={data.soil_moisture < 20 ? "#E67E22" : "#333"}
+                        />
+                        <Divider />
+
+                        <DetailRow 
+                            label="Light Level" 
+                            value={`${data.light_level.toFixed(0)} %`} 
+                        />
                     </div>
                 </div>
             </div>
         </div>
     );
 };
+
+const Divider = () => (
+    <div style={{ borderBottom: "1px solid #eee" }} />
+);
 
 const DetailRow = ({
     label,

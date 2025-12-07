@@ -7,29 +7,32 @@ import { CameraCard } from "./CameraCard";
 import { LoadingScreen } from "./LoadingScreen";
 import { GoogleGenAI, Type } from "@google/genai";
 import { urlToGenerativePart } from "../helpers/urlToGenerativePart";
-import { useInterval } from '../hooks/useInterval';
+import { useInterval } from "../hooks/useInterval";
 import { fetchWater } from "../api/plant";
 import type { SensorData } from "../types/SensorData";
 
-const ai = new GoogleGenAI({ 
-  apiKey: import.meta.env.VITE_GEMINI_API_KEY 
+const ai = new GoogleGenAI({
+  apiKey: import.meta.env.VITE_GEMINI_API_KEY,
 });
 
 const FIVE_MINUTES_MS = 5 * 60 * 1000;
 // const FIVE_MINUTES_MS = 20 * 1000;
-const IMG_URL = "/camera-api/jpg"
-
+const IMG_URL = "/camera-api/jpg";
 
 const getRawModelText = (response: any): string | null => {
-    if (response && response.candidates && response.candidates.length > 0) {
-        const candidate = response.candidates[0];
-        if (candidate.content && candidate.content.parts && candidate.content.parts.length > 0) {
-            // The raw response text is in the first part of the candidate content
-            return candidate.content.parts[0].text;
-        }
+  if (response && response.candidates && response.candidates.length > 0) {
+    const candidate = response.candidates[0];
+    if (
+      candidate.content &&
+      candidate.content.parts &&
+      candidate.content.parts.length > 0
+    ) {
+      // The raw response text is in the first part of the candidate content
+      return candidate.content.parts[0].text;
     }
-    return null;
-} 
+  }
+  return null;
+};
 
 const PlantDashboard = () => {
   const [data, setData] = useState<SensorData | null>(null);
@@ -74,7 +77,7 @@ const PlantDashboard = () => {
     };
   }, []);
 
-  const checkPlantStatus = async ({data}: {data: SensorData | null}) => {
+  const checkPlantStatus = async ({ data }: { data: SensorData | null }) => {
     if (!data) return;
     if (!isVideoActive) return;
     setIsVideoActive(false);
@@ -84,7 +87,7 @@ const PlantDashboard = () => {
         console.log("No sensor data available for analysis.");
         return;
       }
-      
+
       // Get image part from ESP32 camera stream via Vite proxy
       console.log("Preparing image part...");
       const imagePart = await urlToGenerativePart(IMG_URL);
@@ -93,7 +96,7 @@ const PlantDashboard = () => {
 
       const promptParts = [
         imagePart,
-        
+
         `Analyze the plant in the image and the provided data to determine if the plant needs water. 
         The entire response MUST be a JSON object that adheres strictly to the provided responseSchema. DO NOT include any introductory or explanatory text outside of the JSON block.
 
@@ -103,9 +106,9 @@ const PlantDashboard = () => {
         - Humidity: ${data.humidity}%
         - Light Level: ${data.light_level} Lux
 
-        Based on the image and data, what is the 'water_decision' and output it in the JSON object.?`
-      ];     
-      
+        Based on the image and data, what is the 'water_decision' and output it in the JSON object.?`,
+      ];
+
       console.log("Preparing config...");
       const config = {
         temperature: 0.1,
@@ -113,20 +116,20 @@ const PlantDashboard = () => {
         responseSchema: {
           type: Type.OBJECT,
           properties: {
-            water_decision: { 
-              type: Type.STRING, 
-              enum: ["Yes", "No"] 
-            }
-          }
-        }
-      };  
-      
+            water_decision: {
+              type: Type.STRING,
+              enum: ["Yes", "No"],
+            },
+          },
+        },
+      };
+
       console.log("Sending request to AI model...");
       const response: any = await ai.models.generateContent({
-          model: 'gemini-2.5-flash',
-          contents: promptParts,
-          config: config
-      });     
+        model: "gemini-2.5-flash",
+        contents: promptParts,
+        config: config,
+      });
 
       const rawText = getRawModelText(response);
 
@@ -135,39 +138,39 @@ const PlantDashboard = () => {
       }
 
       // Use a regex to locate and extract the valid JSON block {}
-      const jsonMatch = rawText.match(/\{[\s\S]*\}/); 
+      const jsonMatch = rawText.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
-          throw new Error("No valid JSON block found in model response.");
+        throw new Error("No valid JSON block found in model response.");
       }
 
-      const jsonString = jsonMatch[0];      
+      const jsonString = jsonMatch[0];
 
       // Parse the clean JSON string
-      const jsonResponse: { water_decision: "Yes" | "No" } = JSON.parse(jsonString);
+      const jsonResponse: { water_decision: "Yes" | "No" } =
+        JSON.parse(jsonString);
 
       // Now, safely access the decision
-      const decision = jsonResponse.water_decision;   
+      const decision = jsonResponse.water_decision;
 
       if (decision !== "Yes" && decision !== "No") {
-          throw new Error(`Invalid water_decision value: ${decision}`);
+        throw new Error(`Invalid water_decision value: ${decision}`);
       }
 
       if (decision === "Yes") {
-          console.log("The plant needs watering.");
-          await fetchWater(data);
+        console.log("The plant needs watering.");
+        await fetchWater(data);
       } else {
-          console.log("The plant does not need watering.");
+        console.log("The plant does not need watering.");
       }
     } catch (error) {
       console.error("Error checking plant status:", error);
+    } finally {
+      setIsVideoActive(true);
     }
-    finally {
-      setIsVideoActive(true);      
-    }
-  }
+  };
 
   // Check plant status every 5 minutes
-  useInterval(() => checkPlantStatus({data}), FIVE_MINUTES_MS);
+  useInterval(() => checkPlantStatus({ data }), FIVE_MINUTES_MS);
 
   if (loading) return <LoadingScreen />;
   if (!data) return <h2>No Data Found</h2>;
@@ -187,19 +190,33 @@ const PlantDashboard = () => {
     >
       <h1
         style={{
-          fontSize: "2rem",
+          fontSize: "40px",
           fontWeight: "700",
-          color: "#2d3436",
-          marginBottom: "40px",
+          background: "linear-gradient(90deg, #16A34A, #4ADE80)",
+          color: "transparent",
+          WebkitBackgroundClip: "text",
+          marginBottom: "8px",
           letterSpacing: "-0.03em",
           textAlign: "left",
           maxWidth: "1200px",
           width: "100%",
-          margin: "0 auto 40px auto",
+          margin: "0 auto",
         }}
       >
-        Smart <span style={{ color: "#10B981" }}>Plant</span> Monitor
+        <span style={{ color: "#1a1a1a" }}>Smart</span> Plant <span style={{ color: "#1a1a1a" }}>Monitor</span>
       </h1>
+
+      <p
+        style={{
+          color: "#6b7280",
+          fontSize: "1rem",
+          maxWidth: "1200px",
+          width: "100%",
+          margin: "0 auto 20px auto",
+        }}
+      >
+        Real-time monitoring of your plant’s environment & wellbeing.
+      </p>
 
       <div
         style={{
@@ -217,19 +234,25 @@ const PlantDashboard = () => {
           <WeatherCard data={data} />
         </div>
         <div style={{ flex: "4 1 0", minWidth: "250px" }}>
-        {isVideoActive ? (
-              // Renders the live stream when active
-              <CameraCard isVideoActive={true} data={data} checkPlantStatus={() => checkPlantStatus({data})}/>
+          {isVideoActive ? (
+            // Renders the live stream when active
+            <CameraCard
+              isVideoActive={true}
+              data={data}
+              checkPlantStatus={() => checkPlantStatus({ data })}
+            />
           ) : (
-              // Renders the loading screen while stream is down and image/AI is processing
-              <CameraCard isVideoActive={false} data={data} checkPlantStatus={() => checkPlantStatus({data})}/>
+            // Renders the loading screen while stream is down and image/AI is processing
+            <CameraCard
+              isVideoActive={false}
+              data={data}
+              checkPlantStatus={() => checkPlantStatus({ data })}
+            />
           )}
         </div>
       </div>
-    </div>  
+    </div>
   );
 };
-
-
 
 export default PlantDashboard;

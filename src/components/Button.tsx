@@ -17,8 +17,8 @@ export const Button = ({
   const getStyles = () => {
     const baseStyles = {
       padding: "12px 24px",
-      borderRadius: "12px",
-      fontSize: "14px",
+      borderRadius: "14px",
+      fontSize: "15px",
       fontWeight: "600",
       cursor: disabled ? "not-allowed" : "pointer",
       transition: "all 0.2s ease",
@@ -29,7 +29,7 @@ export const Button = ({
       alignItems: "center",
       justifyContent: "center",
       opacity: disabled ? 0.5 : 1,
-      boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
+      boxShadow: "0 2px 5px rgba(0,0,0,0.06)",
     };
 
     const variants = {
@@ -40,17 +40,17 @@ export const Button = ({
         activeBackground: "#15803d",
       },
       secondary: {
-        backgroundColor: "white",
-        color: "#333",
-        hoverBackground: "#f9fafb",
-        activeBackground: "#f3f4f6",
+        backgroundColor: "#f3f4f6",
+        color: "#374151",
+        hoverBackground: "#e5e7eb",
+        activeBackground: "#d1d5db",
       },
       outline: {
         backgroundColor: "transparent",
         color: "#22c55e",
         border: "2px solid #22c55e",
-        hoverBackground: "rgba(34, 197, 94, 0.05)",
-        activeBackground: "rgba(34, 197, 94, 0.1)",
+        hoverBackground: "rgba(34,197,94,0.08)",
+        activeBackground: "rgba(34,197,94,0.15)",
       },
     };
 
@@ -62,8 +62,6 @@ export const Button = ({
     ? styles.activeBackground
     : isHovered
     ? styles.hoverBackground
-    : variant === "outline"
-    ? styles.backgroundColor
     : styles.backgroundColor;
 
   return (
@@ -81,10 +79,12 @@ export const Button = ({
         ...styles,
         backgroundColor: currentBackground,
         border: variant === "outline" ? styles.border : "none",
-        transform: isHovered && !disabled ? "translateY(-1px)" : "translateY(0)",
-        boxShadow: isHovered && !disabled
-          ? "0 4px 8px rgba(0,0,0,0.1)"
-          : "0 2px 4px rgba(0,0,0,0.05)",
+        transform:
+          isHovered && !disabled ? "translateY(-1px)" : "translateY(0)",
+        boxShadow:
+          isHovered && !disabled
+            ? "0 4px 10px rgba(0,0,0,0.12)"
+            : "0 2px 5px rgba(0,0,0,0.06)",
       }}
     >
       {children}
