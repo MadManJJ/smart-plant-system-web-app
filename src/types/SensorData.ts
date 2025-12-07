@@ -1,5 +1,4 @@
 interface SensorData {
-  board_id: number;
   temp: number;
   humidity: number; // Matches your ESP32 variable
   soil_moisture: number;

@@ -16,6 +16,7 @@ const ai = new GoogleGenAI({
 });
 
 const FIVE_MINUTES_MS = 5 * 60 * 1000;
+// const FIVE_MINUTES_MS = 20 * 1000;
 const IMG_URL = "/camera-api/jpg"
 
 

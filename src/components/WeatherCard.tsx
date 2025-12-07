@@ -1,15 +1,4 @@
-
-
-interface SensorData {
-    board_id: number;
-    temp: number;
-    humidity: number;
-    soil_moisture: number;
-    light_level: number;
-    motion_detected: boolean;
-    rain_detected: boolean;
-    timestamp: number;
-}
+import type { SensorData } from "../types/SensorData";
 
 export const WeatherCard = ({ data }: { data: SensorData }) => {
     const formatDate = (timestamp: number) => {
