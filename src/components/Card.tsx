@@ -8,6 +8,7 @@ export const Card = ({
     color = "#333",
     isVideoActive,
     buttonOnclick,
+    checkPlantStatus,
 }: {
     title: string;
     value: string;
@@ -15,6 +16,7 @@ export const Card = ({
     imgURL?: string;
     isVideoActive: boolean;
     buttonOnclick?: () => void;
+    checkPlantStatus?: () => void;
 }) => (
     <div
         style={{
@@ -101,6 +103,7 @@ export const Card = ({
         }}>
             {value}
             <Button onClick={buttonOnclick}>Water</Button> 
+            <Button onClick={checkPlantStatus}>Analyze</Button> 
         </div>
     </div>
 );

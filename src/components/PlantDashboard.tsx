@@ -74,7 +74,8 @@ const PlantDashboard = () => {
     };
   }, []);
 
-  const checkPlantStatus = async () => {
+  const checkPlantStatus = async ({data}: {data: SensorData | null}) => {
+    if (!data) return;
     if (!isVideoActive) return;
     setIsVideoActive(false);
 
@@ -88,6 +89,7 @@ const PlantDashboard = () => {
       console.log("Preparing image part...");
       const imagePart = await urlToGenerativePart(IMG_URL);
       console.log("Image part prepared.");
+      // const imagePart = "test"
 
       const promptParts = [
         imagePart,
@@ -165,7 +167,7 @@ const PlantDashboard = () => {
   }
 
   // Check plant status every 5 minutes
-  useInterval(checkPlantStatus, FIVE_MINUTES_MS);
+  useInterval(() => checkPlantStatus({data}), FIVE_MINUTES_MS);
 
   if (loading) return <LoadingScreen />;
   if (!data) return <h2>No Data Found</h2>;
@@ -217,14 +219,14 @@ const PlantDashboard = () => {
         <div style={{ flex: "4 1 0", minWidth: "250px" }}>
         {isVideoActive ? (
               // Renders the live stream when active
-              <CameraCard isVideoActive={true} data={data} />
+              <CameraCard isVideoActive={true} data={data} checkPlantStatus={() => checkPlantStatus({data})}/>
           ) : (
               // Renders the loading screen while stream is down and image/AI is processing
-              <CameraCard isVideoActive={false} data={data} />
+              <CameraCard isVideoActive={false} data={data} checkPlantStatus={() => checkPlantStatus({data})}/>
           )}
         </div>
       </div>
-    </div>
+    </div>  
   );
 };
 
